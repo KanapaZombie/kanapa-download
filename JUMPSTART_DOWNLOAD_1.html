@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ JUMPSTART ⚡</title>
+    <style>
+        :root {
+            /* Theme 1: Retro Mint */
+            --bg-gradient: linear-gradient(135deg, #e3f4ee, #cadfd8);
+            --card-bg: #eaf5f1;
+            --primary: #2d8b75;
+            --primary-light: #b9e3d6;
+            --accent-dark: #195b4c;
+            --text-color: #20493f;
+            --dial-face: #f5fdfa;
+            --dial-border: #b1d3c8;
+            --knob-bg: radial-gradient(circle, #f2faf7 0%, #a4cfc2 60%, #73a799 100%);
+            --shadow-color: rgba(45, 139, 117, 0.18);
+            --font-family: 'Courier New', Courier, monospace;
+        }
+
+        [data-theme="warm-sage"] {
+            /* Theme 2: Warm Sage */
+            --bg-gradient: linear-gradient(135deg, #f2eae0, #dbd1c3);
+            --card-bg: #ebdcc9;
+            --primary: #7b654c;
+            --primary-light: #ebdcc8;
+            --accent-dark: #4d3e2f;
+            --text-color: #4a3d30;
+            --dial-face: #fefaf3;
+            --dial-border: #cfbea9;
+            --knob-bg: radial-gradient(circle, #fdf8f0 0%, #cca380 60%, #917257 100%);
+            --shadow-color: rgba(123, 101, 76, 0.18);
+        }
+
+        [data-theme="tactical-lime"] {
+            /* Theme 3: Tactical Lime */
+            --bg-gradient: linear-gradient(135deg, #121212, #000);
+            --card-bg: #adff2f;
+            --primary: #000000;
+            --primary-light: rgba(0, 0, 0, 0.1);
+            --accent-dark: #000000;
+            --text-color: #000000;
+            --dial-face: #adff2f;
+            --dial-border: #000000;
+            --knob-bg: radial-gradient(circle, #ffffff 0%, #888888 70%, #000000 100%);
+            --shadow-color: rgba(0, 0, 0, 0.35);
+            --font-family: Arial, Helvetica, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-family);
+            font-weight: bold;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            transition: background 0.3s ease;
+            color: var(--text-color);
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 430px;
+            background: var(--card-bg);
+            border-radius: 40px;
+            box-shadow: 0 20px 45px var(--shadow-color), inset 0 -4px 12px rgba(0,0,0,0.06);
+            border: 6px solid var(--dial-border);
+            padding: 25px 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Header controls */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.7rem;
+            letter-spacing: 4px;
+            text-align: center;
+            flex-grow: 1;
+            color: var(--primary);
+            text-shadow: 1px 1px 0px rgba(255,255,255,0.8);
+        }
+
+        [data-theme="tactical-lime"] .logo {
+            text-shadow: none;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            font-size: 1.6rem;
+            cursor: pointer;
+            color: var(--text-color);
+            transition: transform 0.2s;
+        }
+
+        .icon-btn:hover {
+            transform: scale(1.15);
+        }
+
+        /* Kitchen Dial Visualizer */
+        .dial-container {
+            display: flex;
+            justify-content: center;
+            position: relative;
+            margin: 8px 0;
+        }
+
+        .kitchen-clock {
+            width: 270px;
+            height: 270px;
+            border-radius: 50%;
+            background: var(--dial-face);
+            border: 11px solid var(--dial-border);
+            box-shadow: inset 0 6px 14px rgba(0,0,0,0.12), 0 8px 18px rgba(0,0,0,0.15);
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .clock-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg); /* align top */
+            pointer-events: none;
+        }
+
+        .progress-slice {
+            fill: var(--primary);
+            opacity: 0.6;
+            transition: d 0.1s linear;
+        }
+
+        [data-theme="tactical-lime"] .progress-slice {
+            fill: #000;
+            opacity: 0.3;
+        }
+
+        .clock-number {
+            position: absolute;
+            font-size: 0.9rem;
+            color: var(--text-color);
+            transform: translate(-50%, -50%);
+        }
+
+        .clock-center-knob {
+            width: 66px;
+            height: 66px;
+            border-radius: 50%;
+            background: var(--knob-bg);
+            border: 3px solid var(--dial-border);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.3);
+            z-index: 10;
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .pointer-triangle {
+            position: absolute;
+            top: -19px;
+            width: 0;
+            height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-bottom: 18px solid var(--primary);
+            z-index: 11;
+        }
+
+        /* Input field */
+        .task-input {
+            width: 100%;
+            padding: 14px;
+            border: 3px solid var(--dial-border);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.8);
+            color: var(--text-color);
+            text-align: center;
+            font-size: 1.1rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        [data-theme="tactical-lime"] .task-input {
+            background: #000;
+            color: #adff2f;
+            border-color: #000;
+        }
+
+        .task-input::placeholder {
+            opacity: 0.65;
+        }
+
+        /* Micro Presets Grid */
+        .presets-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+        }
+
+        .preset-btn {
+            padding: 12px 0;
+            font-size: 1.3rem;
+            background: var(--primary-light);
+            border: 3px solid var(--primary);
+            color: var(--accent-dark);
+            border-radius: 16px;
+            cursor: pointer;
+            box-shadow: 0 4px 0px var(--primary);
+            transition: all 0.1s ease;
+        }
+
+        [data-theme="tactical-lime"] .preset-btn {
+            background: #000;
+            color: #adff2f;
+            border-color: #000;
+            box-shadow: none;
+        }
+
+        .preset-btn:active, .preset-btn.active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        [data-theme="tactical-lime"] .preset-btn.active {
+            background: #fff;
+            color: #000;
+        }
+
+        /* Combined Controls Row (Removed Button Clutter) */
+        .controls-action-row {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 16px;
+            border-radius: 18px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            border: 3px solid var(--primary);
+            transition: transform 0.1s, box-shadow 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-play {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 5px 0 var(--accent-dark);
+        }
+
+        .btn-reset {
+            background: transparent;
+            color: var(--text-color);
+            box-shadow: 0 5px 0 var(--dial-border);
+        }
+
+        [data-theme="tactical-lime"] .btn-action {
+            border-color: #000;
+            box-shadow: none !important;
+        }
+
+        [data-theme="tactical-lime"] .btn-play {
+            background: #000;
+            color: #adff2f;
+        }
+
+        [data-theme="tactical-lime"] .btn-reset {
+            background: transparent;
+            color: #000;
+        }
+
+        .btn-action:active {
+            transform: translateY(4px);
+            box-shadow: none !important;
+        }
+
+        /* Auto-Save Toast Alert */
+        .toast-notify {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: var(--accent-dark);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            z-index: 200;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .toast-notify.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Dashboard Footer */
+        footer {
+            border-top: 3px dashed var(--dial-border);
+            padding-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Overlay Sub Panels */
+        .sub-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--card-bg);
+            border-radius: 34px;
+            padding: 25px 20px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--dial-border);
+            padding-bottom: 12px;
+            margin-bottom: 18px;
+        }
+
+        /* Settings CSS */
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0;
+            border-bottom: 2px dashed var(--dial-border);
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--primary-light);
+            transition: .2s;
+            border-radius: 26px;
+            border: 2px solid var(--primary);
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: var(--primary);
+            transition: .2s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--accent-dark);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+            background-color: #fff;
+        }
+
+        select {
+            padding: 6px 12px;
+            border-radius: 10px;
+            border: 2px solid var(--primary);
+            background: var(--dial-face);
+            color: var(--text-color);
+            outline: none;
+        }
+
+        /* Historical Log styling */
+        .log-aggregate-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .aggregate-card {
+            background: var(--primary-light);
+            padding: 12px;
+            border-radius: 14px;
+            text-align: center;
+            color: var(--accent-dark);
+            font-size: 0.85rem;
+        }
+
+        .aggregate-val {
+            font-size: 1.3rem;
+            display: block;
+            margin-top: 4px;
+        }
+
+        [data-theme="tactical-lime"] .aggregate-card {
+            background: #000;
+            color: #adff2f;
+        }
+
+        .log-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .log-item {
+            background: var(--dial-face);
+            border: 2px solid var(--dial-border);
+            border-radius: 12px;
+            padding: 12px;
+            font-size: 0.9rem;
+            position: relative;
+        }
+
+        [data-theme="tactical-lime"] .log-item {
+            background: transparent;
+            border-color: #000;
+        }
+
+        .log-item-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            color: var(--primary);
+        }
+
+        .delete-log-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+            color: #d32f2f;
+            padding: 0 4px;
+        }
+
+        /* Shield Indicator Badge */
+        .shield-badge {
+            font-size: 0.75rem;
+            background: var(--primary);
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container" id="app">
+        
+        <!-- AUTO-SAVE FLOATING NOTIFIER -->
+        <div class="toast-notify" id="auto-save-toast">⚡ +0 EXP Saved Instantly!</div>
+
+        <!-- HEADER -->
+        <header>
+            <button class="icon-btn" id="btn-view-logs" title="View Logs">📜</button>
+            <div class="logo">⚡ JUMPSTART ⚡</div>
+            <button class="icon-btn" id="btn-view-settings" title="Settings">⚙️</button>
+        </header>
+
+        <!-- KITCHEN DIAL VISUALIZER -->
+        <div class="dial-container">
+            <div class="pointer-triangle"></div>
+            <div class="kitchen-clock" id="clock-face">
+                <svg class="clock-svg" viewBox="0 0 200 200">
+                    <path id="svg-slice" class="progress-slice" d="" />
+                </svg>
+                <div class="clock-center-knob"></div>
+            </div>
+        </div>
+
+        <!-- USER NOTE TASK DESCRIPTION -->
+        <input type="text" class="task-input" id="task-note" placeholder="What are you starting?" />
+
+        <!-- PRESET BUTTONS (MINUTES) -->
+        <div class="presets-grid">
+            <button class="preset-btn" data-min="3">3</button>
+            <button class="preset-btn" data-min="5">5</button>
+            <button class="preset-btn" data-min="15">15</button>
+            <button class="preset-btn" data-min="30">30</button>
+            <button class="preset-btn" data-min="60">60</button>
+        </div>
+
+        <!-- SIMPLIFIED, TWO-BUTTON TACTILE CONTROL SYSTEM -->
+        <div class="controls-action-row">
+            <button class="btn-action btn-play" id="btn-primary-action">▶️ START</button>
+            <button class="btn-action btn-reset" id="btn-secondary-action">🔄 RESET</button>
+        </div>
+
+        <!-- FOOTER STATS -->
+        <footer>
+            <div>Today: <span id="stat-today-exp">0</span> EXP</div>
+            <div>Streak: <span id="stat-streak">0</span> Days <span id="shield-indicator" class="shield-badge hidden">🛡️ Shielded</span></div>
+        </footer>
+
+        <!-- SETTINGS PANEL -->
+        <div class="sub-panel hidden" id="panel-settings">
+            <div class="panel-header">
+                <h2>Settings</h2>
+                <button class="icon-btn close-panel-btn">❌</button>
+            </div>
+            <div class="setting-item">
+                <span>Sound Alarm</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="settings-sound" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <span>Tactile Vibration</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="settings-haptics" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <span>Auto-Suggest Next</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="settings-autosuggest" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <span>Compassion Shield</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="settings-shield" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <span>Theme Preset</span>
+                <select id="settings-theme">
+                    <option value="retro-mint">Retro Mint</option>
+                    <option value="warm-sage">Warm Sage</option>
+                    <option value="tactical-lime">Tactical Lime</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- LOGGING / ACCOUNTABILITY LEDGER -->
+        <div class="sub-panel hidden" id="panel-logs">
+            <div class="panel-header">
+                <h2>Activity Log</h2>
+                <button class="icon-btn close-panel-btn">❌</button>
+            </div>
+            <div class="log-aggregate-grid">
+                <div class="aggregate-card">
+                    7-Day EXP Total
+                    <span class="aggregate-val" id="weekly-total">0</span>
+                </div>
+                <div class="aggregate-card">
+                    All-Time Sessions
+                    <span class="aggregate-val" id="total-sessions">0</span>
+                </div>
+            </div>
+            <div class="log-list" id="log-list-container">
+                <!-- Log cards are generated dynamically -->
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Sandboxed System State
+        let config = {
+            sound: true,
+            haptics: true,
+            autoSuggest: true,
+            theme: 'retro-mint',
+            streakShield: true
+        };
+
+        let timerSession = {
+            durationMinutes: 5,
+            secondsLeft: 300,
+            isRunning: false,
+            timerId: null
+        };
+
+        // DOM Nodes
+        const svgSlice = document.getElementById('svg-slice');
+        const taskNoteInput = document.getElementById('task-note');
+        const btnPrimary = document.getElementById('btn-primary-action');
+        const btnSecondary = document.getElementById('btn-secondary-action');
+        
+        const statTodayExp = document.getElementById('stat-today-exp');
+        const statStreak = document.getElementById('stat-streak');
+        const shieldIndicator = document.getElementById('shield-indicator');
+        
+        const panelSettings = document.getElementById('panel-settings');
+        const panelLogs = document.getElementById('panel-logs');
+        const toastNode = document.getElementById('auto-save-toast');
+
+        // Startup Hooks
+        window.addEventListener('DOMContentLoaded', () => {
+            loadConfig();
+            initDatabase();
+            generateDialTicks();
+            selectIntervalPreset(5);
+            applyThemePreset(config.theme);
+            refreshAppStats();
+        });
+
+        // Map layout classic numbering markers around interface clock bezel
+        function generateDialTicks() {
+            const face = document.getElementById('clock-face');
+            const metrics = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+            const radius = 101; 
+
+            metrics.forEach(tick => {
+                const numNode = document.createElement('div');
+                numNode.className = 'clock-number';
+                numNode.innerText = tick;
+                
+                const radians = (tick * 6 * Math.PI) / 180 - Math.PI / 2;
+                const xPos = 135 + radius * Math.cos(radians);
+                const yPos = 135 + radius * Math.sin(radians);
+                
+                numNode.style.left = `${xPos}px`;
+                numNode.style.top = `${yPos}px`;
+                face.appendChild(numNode);
+            });
+        }
+
+        // Mechanical pie-slice radial sweep[cite: 2, 3]
+        function renderSweepDial(percentage) {
+            const sweepRadius = 88;
+            const centerPoint = 100;
+            const degrees = percentage * 360;
+
+            const targetX = centerPoint + sweepRadius * Math.cos((degrees - 90) * Math.PI / 180);
+            const targetY = centerPoint + sweepRadius * Math.sin((degrees - 90) * Math.PI / 180);
+
+            const arcFlag = degrees > 180 ? 1 : 0;
+
+            let dString = '';
+            if (percentage > 0) {
+                dString = `M ${centerPoint} ${centerPoint} L 100 12 A ${sweepRadius} ${sweepRadius} 0 ${arcFlag} 1 ${targetX} ${targetY} Z`;
+            }
+            svgSlice.setAttribute('d', dString);
+        }
+
+        // Preset Actions[cite: 3]
+        document.querySelectorAll('.preset-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                selectIntervalPreset(parseInt(button.dataset.min));
+                triggerHapticFeedback();
+            });
+        });
+
+        function selectIntervalPreset(mins) {
+            if (timerSession.isRunning) stopCountdown();
+            timerSession.durationMinutes = mins;
+            timerSession.secondsLeft = mins * 60;
+
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.dataset.min) === mins);
+            });
+
+            updateVisualSweep();
+        }
+
+        function updateVisualSweep() {
+            const maxSeconds = timerSession.durationMinutes * 60;
+            const ratio = maxSeconds > 0 ? (timerSession.secondsLeft / maxSeconds) : 0;
+            renderSweepDial(ratio);
+        }
+
+        // Streamlined Two-Button Engine Controls[cite: 2]
+        btnPrimary.addEventListener('click', () => {
+            if (timerSession.isRunning) {
+                pauseCountdown();
+            } else {
+                startCountdown();
+            }
+            triggerHapticFeedback();
+        });
+
+        btnSecondary.addEventListener('click', () => {
+            stopCountdown();
+            triggerHapticFeedback();
+        });
+
+        function startCountdown() {
+            timerSession.isRunning = true;
+            btnPrimary.innerHTML = '⏸️ PAUSE';
+            btnSecondary.innerHTML = '⏹️ STOP';
+            
+            timerSession.timerId = setInterval(() => {
+                timerSession.secondsLeft--;
+                updateVisualSweep();
+
+                // Gentle tactile click feedback every minute
+                if (timerSession.secondsLeft > 0 && timerSession.secondsLeft % 60 === 0) {
+                    triggerHapticFeedback();
+                }
+
+                if (timerSession.secondsLeft <= 0) {
+                    completeFocusBlock();
+                }
+            }, 1000);
+        }
+
+        function pauseCountdown() {
+            timerSession.isRunning = false;
+            btnPrimary.innerHTML = '▶️ RESUME';
+            clearInterval(timerSession.timerId);
+        }
+
+        function stopCountdown() {
+            timerSession.isRunning = false;
+            clearInterval(timerSession.timerId);
+            btnPrimary.innerHTML = '▶️ START';
+            btnSecondary.innerHTML = '🔄 RESET';
+            timerSession.secondsLeft = timerSession.durationMinutes * 60;
+            updateVisualSweep();
+        }
+
+        // Instant Auto-Save Complete Event (Eliminating Friction)
+        function completeFocusBlock() {
+            const expGained = timerSession.durationMinutes; // 1 min completed = 1 EXP[cite: 1, 3]
+            clearInterval(timerSession.timerId);
+            timerSession.isRunning = false;
+
+            // Commit to Local Storage Instantly
+            commitLogToDatabase(expGained);
+            
+            // Physical chime synthesis & vibration trigger[cite: 1]
+            fireMechanicalChime();
+            triggerHapticFeedback();
+
+            // Flash visual validation alert banner[cite: 1]
+            showAutoSaveToast(expGained);
+
+            // Progressive Auto-Suggest Flow[cite: 1, 3]
+            if (config.autoSuggest) {
+                const hierarchy = { 3: 5, 5: 15, 15: 30, 30: 60, 60: 3 };
+                selectIntervalPreset(hierarchy[timerSession.durationMinutes] || 5);
+            } else {
+                stopCountdown();
+            }
+
+            refreshAppStats();
+        }
+
+        function showAutoSaveToast(exp) {
+            toastNode.innerText = `⚡ +${exp} EXP Auto-Logged Instantly!`;
+            toastNode.classList.add('visible');
+            setTimeout(() => {
+                toastNode.classList.remove('visible');
+            }, 3200);
+        }
+
+        // Dual Resonant Web-Audio Synthesizer Engine[cite: 1]
+        function fireMechanicalChime() {
+            if (!config.sound) return;
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            
+            const oscillatorFreqA = ctx.createOscillator();
+            const oscillatorFreqB = ctx.createOscillator();
+            const volumeEnvelope = ctx.createGain();
+
+            oscillatorFreqA.type = 'sine';
+            oscillatorFreqA.frequency.setValueAtTime(850, ctx.currentTime);
+            
+            oscillatorFreqB.type = 'triangle';
+            oscillatorFreqB.frequency.setValueAtTime(854, ctx.currentTime); 
+
+            volumeEnvelope.gain.setValueAtTime(0.4, ctx.currentTime);
+            volumeEnvelope.gain.exponentialRampToValueAtTime(0.005, ctx.currentTime + 1.5); // Natural mechanical dampening decay
+
+            oscillatorFreqA.connect(volumeEnvelope);
+            oscillatorFreqB.connect(volumeEnvelope);
+            volumeEnvelope.connect(ctx.destination);
+
+            oscillatorFreqA.start();
+            oscillatorFreqB.start();
+            oscillatorFreqA.stop(ctx.currentTime + 1.8);
+            oscillatorFreqB.stop(ctx.currentTime + 1.8);
+        }
+
+        function triggerHapticFeedback() {
+            if (config.haptics && navigator.vibrate) {
+                navigator.vibrate(35); // crisp tactical click vibration[cite: 1]
+            }
+        }
+
+        // Database Interface Core (LocalStorage)[cite: 1]
+        function initDatabase() {
+            if (!localStorage.getItem('jumpstart_logs')) {
+                localStorage.setItem('jumpstart_logs', JSON.stringify([]));
+            }
+        }
+
+        function commitLogToDatabase(expValue) {
+            const logs = JSON.parse(localStorage.getItem('jumpstart_logs')) || [];
+            const newRecord = {
+                id: 'js-sess-' + Date.now(),
+                timestamp: new Date().toISOString(),
+                duration: timerSession.durationMinutes,
+                exp: expValue,
+                note: taskNoteInput.value.trim() || 'Focus Block Completed'
+            };
+
+            logs.push(newRecord);
+            localStorage.setItem('jumpstart_logs', JSON.stringify(logs));
+            taskNoteInput.value = ''; // Clean slate for the next task[cite: 1]
+        }
+
+        function removeLogEntry(id) {
+            let logs = JSON.parse(localStorage.getItem('jumpstart_logs')) || [];
+            logs = logs.filter(item => item.id !== id);
+            localStorage.setItem('jumpstart_logs', JSON.stringify(logs));
+            buildLedgerEntries();
+            refreshAppStats();
+        }
+
+        // ADHD Streak Calculation with Compassion Shield Protection[cite: 1]
+        function calculateCompassionateStreak() {
+            const logs = JSON.parse(localStorage.getItem('jumpstart_logs')) || [];
+            if (logs.length === 0) return { streak: 0, isShieldActive: false };
+
+            const completedDates = [...new Set(logs.map(item => new Date(item.timestamp).toDateString()))]
+                .map(dStr => new Date(dStr))
+                .sort((a, b) => b - a); // most recent first
+
+            const today = new Date();
+            const todayStr = today.toDateString();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toDateString();
+
+            const mostRecentCompletedStr = completedDates[0] ? completedDates[0].toDateString() : '';
+
+            // If user has never completed anything, or last active was before yesterday
+            const daysSinceLastActive = mostRecentCompletedStr 
+                ? Math.floor((new Date(todayStr) - new Date(mostRecentCompletedStr)) / (1000 * 60 * 60 * 24))
+                : 99;
+
+            let streakCount = 0;
+            let shieldTriggered = false;
+
+            if (daysSinceLastActive === 0 || daysSinceLastActive === 1) {
+                // Regular streak count
+                let currentTarget = new Date(mostRecentCompletedStr);
+                streakCount = 1;
+
+                for (let i = 1; i < completedDates.length; i++) {
+                    const diffTime = Math.abs(currentTarget - completedDates[i]);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays === 1) {
+                        streakCount++;
+                        currentTarget = completedDates[i];
+                    } else {
+                        break;
+                    }
+                }
+            } else if (daysSinceLastActive === 2 && config.streakShield) {
+                // Shield triggered: Allow 1-day absolute grace period!
+                shieldTriggered = true;
+                let currentTarget = completedDates[0]; // Start matching from last active date
+                streakCount = 1;
+
+                for (let i = 1; i < completedDates.length; i++) {
+                    const diffTime = Math.abs(currentTarget - completedDates[i]);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays === 1) {
+                        streakCount++;
+                        currentTarget = completedDates[i];
+                    } else {
+                        break;
+                    }
+                }
+            } else {
+                streakCount = 0; // Shield expires after 48 hours
+            }
+
+            return { streak: streakCount, isShieldActive: shieldTriggered };
+        }
+
+        function refreshAppStats() {
+            const logs = JSON.parse(localStorage.getItem('jumpstart_logs')) || [];
+            const todayStr = new Date().toDateString();
+
+            let dayExp = 0;
+            logs.forEach(item => {
+                const itemDateStr = new Date(item.timestamp).toDateString();
+                if (itemDateStr === todayStr) {
+                    dayExp += item.exp;
+                }
+            });
+
+            statTodayExp.innerText = dayExp;
+
+            // Render compassion score
+            const streakData = calculateCompassionateStreak();
+            statStreak.innerText = streakData.streak;
+            if (streakData.isShieldActive) {
+                shieldIndicator.classList.remove('hidden');
+            } else {
+                shieldIndicator.classList.add('hidden');
+            }
+        }
+
+        // Render logs list inside panel
+        function buildLedgerEntries() {
+            const logs = JSON.parse(localStorage.getItem('jumpstart_logs')) || [];
+            const container = document.getElementById('log-list-container');
+            const weeklyTotalEl = document.getElementById('weekly-total');
+            const totalSessionsEl = document.getElementById('total-sessions');
+
+            container.innerHTML = '';
+            
+            const sevenDaysAgoMs = Date.now() - (7 * 24 * 60 * 60 * 1000);
+            let weeklySum = 0;
+
+            const reversedLogs = [...logs].reverse();
+            totalSessionsEl.innerText = reversedLogs.length;
+
+            if (reversedLogs.length === 0) {
+                container.innerHTML = '<p style="text-align:center; padding: 25px; opacity:0.7;">Start your first visual countdown to build logs.</p>';
+                weeklyTotalEl.innerText = 0;
+                return;
+            }
+
+            reversedLogs.forEach(entry => {
+                const entryDate = new Date(entry.timestamp);
+                if (entryDate.getTime() > sevenDaysAgoMs) {
+                    weeklySum += entry.exp;
+                }
+
+                const dFormat = entryDate.toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'});
+                const tFormat = entryDate.toLocaleTimeString(undefined, {hour: '2-digit', minute:'2-digit'});
+
+                const itemNode = document.createElement('div');
+                itemNode.className = 'log-item';
+                itemNode.innerHTML = `
+                    <div class="log-item-header">
+                        <span>${dFormat} • ${tFormat}</span>
+                        <span>+${entry.exp} EXP <button class="delete-log-btn" onclick="removeLogEntry('${entry.id}')" title="Delete record">🗑️</button></span>
+                    </div>
+                    <div><strong>${entry.note}</strong> (${entry.duration} min)</div>
+                `;
+                container.appendChild(itemNode);
+            });
+
+            weeklyTotalEl.innerText = weeklySum;
+        }
+
+        // Panel Navigation Controls[cite: 1]
+        document.getElementById('btn-view-settings').addEventListener('click', () => {
+            panelSettings.classList.remove('hidden');
+        });
+
+        document.getElementById('btn-view-logs').addEventListener('click', () => {
+            buildLedgerEntries();
+            panelLogs.classList.remove('hidden');
+        });
+
+        document.querySelectorAll('.close-panel-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                panelSettings.classList.add('hidden');
+                panelLogs.classList.add('hidden');
+            });
+        });
+
+        // Config state load/commit[cite: 1]
+        function loadConfig() {
+            const data = localStorage.getItem('jumpstart_settings');
+            if (data) {
+                config = JSON.parse(data);
+            }
+            document.getElementById('settings-sound').checked = config.sound;
+            document.getElementById('settings-haptics').checked = config.haptics;
+            document.getElementById('settings-autosuggest').checked = config.autoSuggest;
+            document.getElementById('settings-shield').checked = config.streakShield !== false;
+            document.getElementById('settings-theme').value = config.theme;
+        }
+
+        function commitConfig() {
+            config.sound = document.getElementById('settings-sound').checked;
+            config.haptics = document.getElementById('settings-haptics').checked;
+            config.autoSuggest = document.getElementById('settings-autosuggest').checked;
+            config.streakShield = document.getElementById('settings-shield').checked;
+            config.theme = document.getElementById('settings-theme').value;
+
+            localStorage.setItem('jumpstart_settings', JSON.stringify(config));
+            applyThemePreset(config.theme);
+            refreshAppStats();
+        }
+
+        function applyThemePreset(themeId) {
+            document.body.removeAttribute('data-theme');
+            if (themeId !== 'retro-mint') {
+                document.body.setAttribute('data-theme', themeId);
+            }
+        }
+
+        document.getElementById('settings-sound').addEventListener('change', commitConfig);
+        document.getElementById('settings-haptics').addEventListener('change', commitConfig);
+        document.getElementById('settings-autosuggest').addEventListener('change', commitConfig);
+        document.getElementById('settings-shield').addEventListener('change', commitConfig);
+        document.getElementById('settings-theme').addEventListener('change', commitConfig);
+    </script>
+</body>
+</html>

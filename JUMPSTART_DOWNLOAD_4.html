@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JUMPSTART | CRT TERMINAL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { --bg: #000000; --fg: #00FF41; }
+        [data-theme="green-white"] { --bg: #ffffff; --fg: #004d1a; }
+        [data-theme="neg-green"] { --bg: #00FF41; --fg: #000000; }
+        body { background-color: var(--bg); color: var(--fg); font-family: 'Courier New', Courier, monospace; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
+        .crt-border { border: 2px solid var(--fg); padding: 1rem; width: 95%; max-width: 400px; display: flex; flex-direction: column; align-items: center; }
+        .btn { border: 1px solid var(--fg); padding: 0.2rem 0.5rem; cursor: pointer; user-select: none; }
+        .btn:hover, .btn.active { background: var(--fg); color: var(--bg); }
+        svg { width: 280px; height: 280px; }
+    </style>
+</head>
+<body data-theme="green-black">
+
+    <div class="crt-border">
+        <div class="text-xs">=========================================</div>
+        <div class="flex gap-4 py-1"><span>⚡</span> JUMPSTART <span>⚡</span></div>
+        <div class="text-xs">=========================================</div>
+
+        <div class="my-2">
+            <input type="text" id="taskInput" placeholder="WHAT ARE YOU STARTING?" 
+                   class="bg-transparent border-b border-fg text-center outline-none w-full text-sm">
+        </div>
+
+        <div class="relative">
+            <svg viewBox="0 0 300 300">
+                <circle cx="150" cy="150" r="140" fill="none" stroke="var(--fg)" stroke-width="2" />
+                <g id="ticks"></g>
+                <path id="sweep" d="" fill="var(--fg)" />
+                <circle cx="150" cy="150" r="40" fill="var(--bg)" stroke="var(--fg)" stroke-width="2" />
+                <text id="digital-clock" x="150" y="160" text-anchor="middle" font-size="30" fill="var(--fg)">05:00</text>
+            </svg>
+        </div>
+
+        <div class="flex gap-2 my-4" id="intervals">
+            <button class="btn" onclick="setDuration(3)">3</button>
+            <button class="btn" onclick="setDuration(5)">5</button>
+            <button class="btn" onclick="setDuration(15)">15</button>
+            <button class="btn" onclick="setDuration(30)">30</button>
+            <button class="btn" onclick="setDuration(60)">60</button>
+        </div>
+
+        <div class="flex gap-6 text-xl mb-4">
+            <button onclick="startTimer()">▶</button>
+            <button onclick="stopTimer()">II</button>
+        </div>
+
+        <div class="text-xs">Today • Exp Total • Time Completed</div>
+        <div class="text-xs">=========================================</div>
+    </div>
+
+    <script>
+        let endTime = null;
+        let duration = 300;
+        
+        function drawTicks() {
+            const group = document.getElementById('ticks');
+            for(let i=0; i<60; i++) {
+                const angle = i * 6;
+                const len = (i % 5 === 0) ? 15 : 5;
+                const x1 = 150 + 130 * Math.sin(angle * Math.PI / 180);
+                const y1 = 150 - 130 * Math.cos(angle * Math.PI / 180);
+                const x2 = 150 + (130 - len) * Math.sin(angle * Math.PI / 180);
+                const y2 = 150 - (130 - len) * Math.cos(angle * Math.PI / 180);
+                group.innerHTML += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--fg)" stroke-width="1" />`;
+            }
+        }
+
+        function setDuration(m) { duration = m * 60; document.getElementById('digital-clock').textContent = `${m.toString().padStart(2, '0')}:00`; }
+        function startTimer() { endTime = Date.now() + (duration * 1000); }
+        function stopTimer() { endTime = null; }
+
+        function update() {
+            if (endTime) {
+                const now = Date.now();
+                const remaining = Math.max(0, endTime - now);
+                const secs = Math.ceil(remaining / 1000);
+                const m = Math.floor(secs / 60).toString().padStart(2, '0');
+                const s = (secs % 60).toString().padStart(2, '0');
+                document.getElementById('digital-clock').textContent = `${m}:${s}`;
+                
+                const progress = ((duration * 1000 - remaining) / (duration * 1000)) * 360;
+                const rad = (progress - 90) * Math.PI / 180;
+                const x = 150 + 140 * Math.cos(rad);
+                const y = 150 + 140 * Math.sin(rad);
+                document.getElementById('sweep').setAttribute('d', `M 150 150 L 150 10 A 140 140 0 ${progress > 180 ? 1 : 0} 1 ${x} ${y} Z`);
+                
+                if (remaining === 0) endTime = null;
+            }
+            requestAnimationFrame(update);
+        }
+
+        drawTicks();
+        update();
+    </script>
+</body>
+</html>

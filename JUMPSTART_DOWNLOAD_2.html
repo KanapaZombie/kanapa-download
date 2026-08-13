@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JUMPSTART - CRT Terminal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Default: Black & Green (Matrix style) */
+            --bg: #051205;
+            --fg: #00FF41;
+            --glow: rgba(0, 255, 65, 0.6);
+            --slice-fill: #00FF41;
+            --slice-opacity: 0.3;
+        }
+
+        [data-theme="green-white"] {
+            /* Green & White (Blueprint style) */
+            --bg: #004d1a; 
+            --fg: #ffffff;
+            --glow: rgba(255, 255, 255, 0.5);
+            --slice-fill: #ffffff;
+            --slice-opacity: 0.9;
+        }
+
+        [data-theme="green-black"] {
+            /* High Contrast Negative (Green & Black) */
+            --bg: #00FF41;
+            --fg: #000000;
+            --glow: rgba(0, 0, 0, 0.2);
+            --slice-fill: #000000;
+            --slice-opacity: 0.8;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--fg);
+            font-family: 'JetBrains Mono', monospace;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 1rem;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow-x: hidden;
+            transition: background-color 0.1s, color 0.1s;
+        }
+
+        /* CRT Scanline Overlay */
+        body::after {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%);
+            background-size: 100% 4px;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 430px;
+            background-color: transparent;
+            padding: 16px;
+            position: relative;
+        }
+
+        /* Typography & Glows */
+        h1, p, div, span, button, text {
+            text-shadow: 0 0 4px var(--glow);
+            text-transform: uppercase;
+        }
+        
+        svg path, svg line, svg circle {
+            filter: drop-shadow(0 0 2px var(--glow));
+        }
+
+        .ascii-divider {
+            text-align: center;
+            overflow: hidden;
+            white-space: nowrap;
+            opacity: 0.8;
+            margin: 12px 0;
+            font-size: 12px;
+            letter-spacing: 2px;
+        }
+
+        /* Dial Container */
+        .dial-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            margin: 1rem auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .svg-dial {
+            width: 100%;
+            height: 100%;
+            /* Rotate -90deg so 0 degrees starts at 12 o'clock (Top) */
+            transform: rotate(-90deg);
+        }
+
+        /* Flat Interactive Elements */
+        .terminal-btn {
+            background: transparent;
+            border: 2px solid var(--fg);
+            color: var(--fg);
+            padding: 8px 16px;
+            font-family: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 0 5px var(--glow), inset 0 0 5px var(--glow);
+            transition: all 0.1s;
+        }
+
+        .terminal-btn:active {
+            background: var(--fg);
+            color: var(--bg);
+            box-shadow: none;
+            text-shadow: none;
+        }
+
+        .preset-pill {
+            background: transparent;
+            border: 1px solid var(--fg);
+            color: var(--fg);
+            padding: 4px 12px;
+            font-weight: 700;
+            cursor: pointer;
+            opacity: 0.6;
+        }
+
+        .preset-pill.active {
+            background: var(--fg);
+            color: var(--bg);
+            opacity: 1;
+            text-shadow: none;
+            box-shadow: 0 0 8px var(--glow);
+        }
+
+        /* Theme Selector */
+        .theme-selector {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        .theme-opt { cursor: pointer; opacity: 0.5; }
+        .theme-opt.active { opacity: 1; font-weight: bold; text-decoration: underline; }
+        .theme-opt:hover { opacity: 0.8; }
+
+        /* Ledger */
+        .ledger-list {
+            max-height: 120px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--fg) transparent;
+        }
+        .ledger-item {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px dashed var(--fg);
+            padding: 4px 0;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .shield-badge {
+            border: 1px solid var(--fg);
+            padding: 2px 6px;
+            font-size: 10px;
+        }
+    </style>
+</head>
+<body data-theme="black-green">
+
+    <div class="app-container">
+        
+        <!-- Header -->
+        <div class="ascii-divider">========================================</div>
+        <div class="flex justify-center items-center gap-4 my-2">
+            <span>⚡</span>
+            <h1 class="text-xl font-bold tracking-widest">JUMPSTART</h1>
+            <span>⚡</span>
+        </div>
+        <div class="ascii-divider">========================================</div>
+
+        <!-- Theme Selection -->
+        <div class="theme-selector" id="theme-selector">
+            <span class="theme-opt active" onclick="setTheme('black-green')">[B&G]</span>
+            <span class="theme-opt" onclick="setTheme('green-white')">[G&W]</span>
+            <span class="theme-opt" onclick="setTheme('green-black')">[G&B]</span>
+        </div>
+
+        <!-- Main Radar Dial -->
+        <div class="dial-container" id="dial-container">
+            <svg class="svg-dial" viewBox="0 0 300 300">
+                <!-- Static Outer Ring & Inner Ring -->
+                <circle cx="150" cy="150" r="148" fill="none" stroke="var(--fg)" stroke-width="2" />
+                <circle cx="150" cy="150" r="40" fill="none" stroke="var(--fg)" stroke-width="2" />
+                
+                <!-- Tick Marks (Injected by JS) -->
+                <g id="dial-ticks"></g>
+
+                <!-- Dynamic Pie Slice -->
+                <path id="slice-path" d="" fill="var(--slice-fill)" opacity="var(--slice-opacity)"></path>
+                
+                <!-- Inner circle to mask pie slice into a donut shape -->
+                <circle cx="150" cy="150" r="41" fill="var(--bg)" stroke="var(--fg)" stroke-width="2" />
+
+                <!-- Rotating Readout Group -->
+                <g id="readout-group">
+                    <!-- Dashed line pointing to text -->
+                    <line x1="41" y1="150" x2="90" y2="150" stroke="var(--fg)" stroke-width="2" stroke-dasharray="4,4" />
+                    <!-- Solid line carrying the readout -->
+                    <line x1="90" y1="150" x2="110" y2="150" stroke="var(--fg)" stroke-width="2" />
+                    <!-- Small triangle arrow head pointing to outer edge -->
+                    <polygon points="110,145 120,150 110,155" fill="var(--fg)" />
+                    
+                    <!-- Digital Readout Text (Positioned at radius 80 inside the group) -->
+                    <text id="svg-timer-text" x="70" y="150" fill="var(--fg)" font-size="20" font-weight="bold" font-family="'JetBrains Mono', monospace" text-anchor="middle" dominant-baseline="middle">05:00</text>
+                </g>
+            </svg>
+        </div>
+
+        <div class="ascii-divider">----------------------------------------</div>
+        <div class="text-center text-xs font-bold mb-3 tracking-widest">WHAT ARE YOU STARTING?</div>
+
+        <!-- Interval Presets -->
+        <div class="flex justify-center gap-2 mb-4" id="preset-container">
+            <!-- Pills generated by JS -->
+        </div>
+
+        <!-- Primary Controls -->
+        <div class="flex justify-center gap-4 mt-2 mb-4">
+            <button class="terminal-btn" id="btn-play" onclick="handlePlayPause()">
+                <span id="text-play">► PLAY</span>
+            </button>
+            <button class="terminal-btn" id="btn-stop" onclick="handleStop()">
+                <span>■ RESET</span>
+            </button>
+        </div>
+
+        <div class="ascii-divider">========================================</div>
+
+        <!-- Stats & Ledger -->
+        <div class="mt-4">
+            <div class="flex justify-between items-end mb-2 text-sm">
+                <div>
+                    <div>EXP TOTAL: <span id="stat-exp" class="font-bold text-lg">0</span></div>
+                </div>
+                <div class="text-right">
+                    <div>STREAK: <span id="stat-streak" class="font-bold text-lg">0</span></div>
+                    <div id="shield-status" class="mt-1 hidden">
+                        <span class="shield-badge">🛡️ SHIELDED</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-xs font-bold mb-1 mt-4">>> SESSION LOG</div>
+            <div class="ledger-list" id="ledger-list">
+                <!-- Ledger items injected by JS -->
+                <div class="text-center text-xs opacity-50 py-2" id="empty-ledger">NO DATA. AWAITING INPUT.</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const INTERVALS = [3, 5, 15, 30, 60];
+        let currentIntervalIndex = 1; // Default to 5
+        let totalSeconds = INTERVALS[currentIntervalIndex] * 60;
+        let secondsRemaining = totalSeconds;
+        let isRunning = false;
+        let timerInterval = null;
+        let lastVibrateSecond = -1;
+
+        const DB_KEY = 'jumpstart_sessions';
+
+        // DOM Elements
+        const elSlice = document.getElementById('slice-path');
+        const elReadoutGroup = document.getElementById('readout-group');
+        const elReadoutText = document.getElementById('svg-timer-text');
+        const elPresetContainer = document.getElementById('preset-container');
+        const elBtnPlayText = document.getElementById('text-play');
+        const elStatExp = document.getElementById('stat-exp');
+        const elStatStreak = document.getElementById('stat-streak');
+        const elShieldStatus = document.getElementById('shield-status');
+        const elLedgerList = document.getElementById('ledger-list');
+        const elEmptyLedger = document.getElementById('empty-ledger');
+
+        function triggerHaptic(duration = 35) {
+            if (navigator.vibrate) {
+                try { navigator.vibrate(duration); } catch(e) {}
+            }
+        }
+
+        function playChime() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                
+                const ctx = new AudioContext();
+                const masterGain = ctx.createGain();
+                masterGain.connect(ctx.destination);
+                
+                masterGain.gain.setValueAtTime(0, ctx.currentTime);
+                masterGain.gain.linearRampToValueAtTime(1, ctx.currentTime + 0.05);
+                masterGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 4);
+
+                const osc1 = ctx.createOscillator();
+                osc1.type = 'square'; // harsher CRT beep
+                osc1.frequency.value = 850;
+                osc1.connect(masterGain);
+
+                const osc2 = ctx.createOscillator();
+                osc2.type = 'square';
+                osc2.frequency.value = 854;
+                osc2.connect(masterGain);
+
+                osc1.start(ctx.currentTime);
+                osc2.start(ctx.currentTime);
+
+                osc1.stop(ctx.currentTime + 4.1);
+                osc2.stop(ctx.currentTime + 4.1);
+                
+                setTimeout(() => {
+                    if(ctx.state !== 'closed') ctx.close();
+                }, 4500);
+
+            } catch (err) {
+                console.log("Audio playback failed", err);
+            }
+        }
+
+        function setTheme(themeName) {
+            document.body.setAttribute('data-theme', themeName);
+            triggerHaptic(20);
+            
+            document.querySelectorAll('.theme-opt').forEach(opt => opt.classList.remove('active'));
+            if(themeName === 'black-green') document.querySelectorAll('.theme-opt')[0].classList.add('active');
+            if(themeName === 'green-white') document.querySelectorAll('.theme-opt')[1].classList.add('active');
+            if(themeName === 'green-black') document.querySelectorAll('.theme-opt')[2].classList.add('active');
+            
+            localStorage.setItem('jumpstart_crt_theme', themeName);
+        }
+
+        function buildDialTicks() {
+            const group = document.getElementById('dial-ticks');
+            group.innerHTML = ''; 
+            
+            // 60 minutes = 360 degrees. 1 min = 6 degrees.
+            for(let i=0; i<60; i++) {
+                const angle = i * 6;
+                const isMajor = i % 5 === 0;
+                
+                const rad = angle * Math.PI / 180;
+                // Inner padding
+                const rStart = isMajor ? 125 : 138;
+                const rEnd = 148; 
+                
+                const x1 = 150 + rStart * Math.cos(rad);
+                const y1 = 150 + rStart * Math.sin(rad);
+                const x2 = 150 + rEnd * Math.cos(rad);
+                const y2 = 150 + rEnd * Math.sin(rad);
+                
+                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                line.setAttribute('x1', x1);
+                line.setAttribute('y1', y1);
+                line.setAttribute('x2', x2);
+                line.setAttribute('y2', y2);
+                line.setAttribute('stroke', 'var(--fg)');
+                line.setAttribute('stroke-width', isMajor ? '2' : '1');
+                group.appendChild(line);
+
+                if (isMajor) {
+                    const textRadius = 112; // inside the ticks
+                    const tx = 150 + textRadius * Math.cos(rad);
+                    const ty = 150 + textRadius * Math.sin(rad);
+                    
+                    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    text.setAttribute('x', tx);
+                    text.setAttribute('y', ty);
+                    text.setAttribute('fill', 'var(--fg)');
+                    text.setAttribute('font-size', '14');
+                    text.setAttribute('font-weight', 'bold');
+                    text.setAttribute('text-anchor', 'middle');
+                    text.setAttribute('dominant-baseline', 'middle');
+                    
+                    // The SVG is rotated -90deg in CSS. To make text upright, rotate it +90deg around its own center
+                    text.setAttribute('transform', `rotate(90, ${tx}, ${ty})`);
+                    text.textContent = i;
+                    group.appendChild(text);
+                }
+            }
+        }
+
+        function renderPresets() {
+            elPresetContainer.innerHTML = '';
+            INTERVALS.forEach((min, index) => {
+                const btn = document.createElement('button');
+                btn.className = `preset-pill ${index === currentIntervalIndex ? 'active' : ''}`;
+                btn.innerText = `[ ${min} ]`;
+                btn.onclick = () => selectPreset(index);
+                elPresetContainer.appendChild(btn);
+            });
+        }
+
+        function updateDialVisuals() {
+            const m = Math.floor(secondsRemaining / 60).toString().padStart(2, '0');
+            const s = (secondsRemaining % 60).toString().padStart(2, '0');
+            elReadoutText.textContent = `${m}:${s}`;
+
+            // Map time onto the 60-minute circle (3600 seconds = 360 degrees)
+            const degrees = (secondsRemaining / 3600) * 360;
+            const radians = degrees * Math.PI / 180;
+            
+            // Group rotation (places the pointer/text exactly at the current remaining time on dial)
+            elReadoutGroup.setAttribute('transform', `rotate(${degrees}, 150, 150)`);
+
+            // Counter-rotate the text inside the group so it stays upright.
+            // Math: SVG is -90deg. Group is +degrees. Total rotation = degrees - 90.
+            // To upright it, we apply -(degrees - 90) = 90 - degrees.
+            // The text is placed at x=70, y=150 inside the group.
+            const counterAngle = 90 - degrees;
+            elReadoutText.setAttribute('transform', `rotate(${counterAngle}, 70, 150)`);
+
+            // Draw SVG Pie Slice (fills from 0 down to current time)
+            const cx = 150;
+            const cy = 150;
+            const r = 135; // Outer edge of the pie slice
+
+            if (secondsRemaining === 0) {
+                elSlice.setAttribute('d', '');
+            } else if (secondsRemaining >= 3600) {
+                elSlice.setAttribute('d', `M 150,150 m -${r},0 a ${r},${r} 0 1,0 ${r*2},0 a ${r},${r} 0 1,0 -${r*2},0`);
+            } else {
+                // End point of the arc
+                const x = cx + r * Math.cos(radians);
+                const y = cy + r * Math.sin(radians);
+
+                const largeArcFlag = degrees > 180 ? 1 : 0;
+
+                // Path starts at center, goes to 0 deg (right side, which is top visually due to -90deg rotation),
+                // sweeps to angle, then back to center.
+                const d = `
+                    M ${cx} ${cy}
+                    L ${cx + r} ${cy}
+                    A ${r} ${r} 0 ${largeArcFlag} 1 ${x} ${y}
+                    Z
+                `;
+                elSlice.setAttribute('d', d);
+            }
+        }
+
+        function selectPreset(index) {
+            if (isRunning) return;
+            triggerHaptic(30);
+            currentIntervalIndex = index;
+            totalSeconds = INTERVALS[currentIntervalIndex] * 60;
+            secondsRemaining = totalSeconds;
+            renderPresets();
+            updateDialVisuals();
+        }
+
+        function toggleButtons() {
+            if (isRunning) {
+                elBtnPlayText.innerText = "■ PAUSE";
+            } else {
+                elBtnPlayText.innerText = "► PLAY";
+            }
+        }
+
+        function handlePlayPause() {
+            triggerHaptic(40);
+            if (isRunning) {
+                clearInterval(timerInterval);
+                isRunning = false;
+            } else {
+                isRunning = true;
+                lastVibrateSecond = secondsRemaining;
+                const expectedEnd = Date.now() + (secondsRemaining * 1000);
+                
+                timerInterval = setInterval(() => {
+                    const now = Date.now();
+                    const diff = Math.max(0, expectedEnd - now);
+                    secondsRemaining = Math.ceil(diff / 1000);
+
+                    // 60-second tactile heartbeat
+                    if (secondsRemaining % 60 === 0 && secondsRemaining !== totalSeconds && secondsRemaining !== 0) {
+                        if (lastVibrateSecond !== secondsRemaining) {
+                            triggerHaptic(35);
+                            lastVibrateSecond = secondsRemaining;
+                        }
+                    }
+
+                    updateDialVisuals();
+
+                    if (secondsRemaining <= 0) {
+                        handleTimerComplete();
+                    }
+                }, 200);
+            }
+            toggleButtons();
+        }
+
+        function handleStop() {
+            triggerHaptic([30, 50, 30]);
+            clearInterval(timerInterval);
+            isRunning = false;
+            secondsRemaining = totalSeconds;
+            updateDialVisuals();
+            toggleButtons();
+        }
+
+        function handleTimerComplete() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            
+            playChime();
+            triggerHaptic([50, 100, 50, 100, 50]);
+
+            const durationMins = INTERVALS[currentIntervalIndex];
+            saveSession(durationMins);
+
+            // Auto-advance preset loop
+            currentIntervalIndex = (currentIntervalIndex + 1) % INTERVALS.length;
+            totalSeconds = INTERVALS[currentIntervalIndex] * 60;
+            secondsRemaining = totalSeconds;
+            
+            renderPresets();
+            updateDialVisuals();
+            toggleButtons();
+            renderStats();
+        }
+
+        function getSessions() {
+            const data = localStorage.getItem(DB_KEY);
+            return data ? JSON.parse(data) : [];
+        }
+
+        function saveSession(minutes) {
+            const sessions = getSessions();
+            sessions.push({
+                id: Date.now().toString(),
+                timestamp: Date.now(),
+                durationMinutes: minutes,
+                exp: minutes
+            });
+            localStorage.setItem(DB_KEY, JSON.stringify(sessions));
+        }
+
+        function deleteSession(id) {
+            triggerHaptic(20);
+            let sessions = getSessions();
+            sessions = sessions.filter(s => s.id !== id);
+            localStorage.setItem(DB_KEY, JSON.stringify(sessions));
+            renderStats();
+        }
+
+        function renderStats() {
+            const sessions = getSessions();
+            
+            if (sessions.length === 0) {
+                elEmptyLedger.style.display = 'block';
+                elLedgerList.innerHTML = '';
+                elLedgerList.appendChild(elEmptyLedger);
+                elStatExp.innerText = '0';
+                elStatStreak.innerText = '0';
+                elShieldStatus.classList.add('hidden');
+                return;
+            }
+
+            elEmptyLedger.style.display = 'none';
+            
+            const recentExp = sessions.reduce((sum, s) => sum + s.exp, 0);
+            elStatExp.innerText = recentExp;
+
+            elLedgerList.innerHTML = '';
+            const sortedSessions = [...sessions].sort((a,b) => b.timestamp - a.timestamp);
+            
+            sortedSessions.forEach(session => {
+                const date = new Date(session.timestamp);
+                const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const dateStr = date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+                
+                const item = document.createElement('div');
+                item.className = 'ledger-item';
+                item.innerHTML = `
+                    <div>[+${session.exp} EXP] ${dateStr} ${timeStr}</div>
+                    <button onclick="deleteSession('${session.id}')" class="hover:text-red-500">[DEL]</button>
+                `;
+                elLedgerList.appendChild(item);
+            });
+
+            calculateStreak(sessions);
+        }
+
+        function calculateStreak(sessions) {
+            const daysActive = new Set();
+            sessions.forEach(s => {
+                const date = new Date(s.timestamp);
+                daysActive.add(`${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}`);
+            });
+
+            if (daysActive.size === 0) {
+                elStatStreak.innerText = '0';
+                elShieldStatus.classList.add('hidden');
+                return;
+            }
+
+            let streak = 0;
+            let isShielded = false;
+            
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`;
+            
+            const yesterday = new Date(Date.now() - 86400000);
+            const yesterdayStr = `${yesterday.getFullYear()}-${yesterday.getMonth()+1}-${yesterday.getDate()}`;
+
+            const twoDaysAgo = new Date(Date.now() - 86400000 * 2);
+            const twoDaysAgoStr = `${twoDaysAgo.getFullYear()}-${twoDaysAgo.getMonth()+1}-${twoDaysAgo.getDate()}`;
+
+            let currentDateCheck = today;
+
+            if (daysActive.has(todayStr) || daysActive.has(yesterdayStr)) {
+                // Streak active normally
+            } else if (daysActive.has(twoDaysAgoStr)) {
+                isShielded = true;
+                currentDateCheck = twoDaysAgo;
+            } else {
+                elStatStreak.innerText = '0';
+                elShieldStatus.classList.add('hidden');
+                return;
+            }
+
+            let countDate = new Date(currentDateCheck);
+            while(true) {
+                const checkStr = `${countDate.getFullYear()}-${countDate.getMonth()+1}-${countDate.getDate()}`;
+                if (daysActive.has(checkStr)) {
+                    streak++;
+                    countDate = new Date(countDate.getTime() - 86400000);
+                } else {
+                    const olderDate = new Date(countDate.getTime() - 86400000);
+                    const olderStr = `${olderDate.getFullYear()}-${olderDate.getMonth()+1}-${olderDate.getDate()}`;
+                    if (daysActive.has(olderStr)) {
+                        countDate = olderDate; 
+                    } else {
+                        break; 
+                    }
+                }
+            }
+
+            elStatStreak.innerText = streak;
+            
+            if (isShielded && !daysActive.has(todayStr)) {
+                elShieldStatus.classList.remove('hidden');
+            } else {
+                elShieldStatus.classList.add('hidden');
+            }
+        }
+
+        function init() {
+            const savedTheme = localStorage.getItem('jumpstart_crt_theme') || 'black-green';
+            setTheme(savedTheme);
+
+            buildDialTicks();
+            renderPresets();
+            updateDialVisuals();
+            renderStats();
+            
+            if ('wakeLock' in navigator) {
+                try {
+                    navigator.wakeLock.request('screen').catch(()=>console.log("Wake lock denied"));
+                } catch (err) {}
+            }
+        }
+
+        window.onload = init;
+
+    </script>
+</body>
+</html>

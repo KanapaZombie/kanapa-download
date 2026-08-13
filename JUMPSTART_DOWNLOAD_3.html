@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="tactical_lime">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JUMPSTART - ADHD Timer</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #000000;
+    --bg-gradient: linear-gradient(135deg, #121212, #000000);
+    --card-bg: #ADFF2F;
+    --dial-border: #000000;
+    --text-color: #ADFF2F;
+    --text-inverted: #000000;
+    --surface: #1a1a1a;
+  }
+  
+  [data-theme="retro_mint"] {
+    --primary: #2D8B75;
+    --bg-gradient: linear-gradient(135deg, #e3f4ee, #cadfd8);
+    --card-bg: #EAF5F1;
+    --dial-border: #B1D3C8;
+    --text-color: #2D8B75;
+    --text-inverted: #EAF5F1;
+    --surface: #d3e8e1;
+  }
+
+  [data-theme="warm_sage"] {
+    --primary: #7B654C;
+    --bg-gradient: linear-gradient(135deg, #f2eae0, #dbd1c3);
+    --card-bg: #EBDCC9;
+    --dial-border: #CFBEA9;
+    --text-color: #7B654C;
+    --text-inverted: #EBDCC9;
+    --surface: #e4d3bf;
+  }
+  
+  [data-theme="tactical_lime"] {
+    --primary: #000000;
+    --bg-gradient: linear-gradient(135deg, #121212, #0a0a0a);
+    --card-bg: #ADFF2F;
+    --dial-border: #ADFF2F;
+    --text-color: #ADFF2F;
+    --text-inverted: #000000;
+    --surface: #111111;
+  }
+
+  * { box-sizing: border-box; }
+  
+  body {
+    margin: 0;
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg-gradient);
+    color: var(--text-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Glitch Effect for tactical_lime (Zombie) */
+  [data-theme="tactical_lime"] .glitch-text {
+    position: relative;
+  }
+  [data-theme="tactical_lime"] .glitch-text::before,
+  [data-theme="tactical_lime"] .glitch-text::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+  }
+  [data-theme="tactical_lime"] .glitch-text::before {
+    left: 2px;
+    text-shadow: -2px 0 #ff00c1;
+    clip: rect(24px, 550px, 90px, 0);
+    animation: glitch-anim 3s infinite linear alternate-reverse;
+  }
+  [data-theme="tactical_lime"] .glitch-text::after {
+    left: -2px;
+    text-shadow: -2px 0 #00fff9;
+    clip: rect(85px, 550px, 140px, 0);
+    animation: glitch-anim 2.5s infinite linear alternate-reverse;
+  }
+  
+  @keyframes glitch-anim {
+    0% { clip: rect(10px, 9999px, 44px, 0); }
+    5% { clip: rect(66px, 9999px, 20px, 0); }
+    10% { clip: rect(12px, 9999px, 89px, 0); }
+    15% { clip: rect(79px, 9999px, 55px, 0); }
+    20% { clip: rect(22px, 9999px, 33px, 0); }
+    100% { clip: rect(10px, 9999px, 44px, 0); }
+  }
+
+  .app-container {
+    width: 100%;
+    max-width: 400px;
+    background: var(--primary);
+    border-radius: 40px;
+    padding: 30px 20px;
+    box-shadow: 0 24px 48px rgba(0,0,0,0.4), inset 0 2px 10px rgba(255,255,255,0.05);
+    border: 2px solid var(--dial-border);
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 10px;
+  }
+
+  .logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+  }
+
+  .theme-selector {
+    display: flex;
+    gap: 8px;
+  }
+
+  .theme-btn {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .theme-btn:active { transform: scale(0.8); }
+  .theme-btn.active { border-color: #fff; }
+  .theme-retro { background: #2D8B75; }
+  .theme-sage { background: #7B654C; }
+  .theme-lime { background: #ADFF2F; }
+
+  .dial-wrapper {
+    position: relative;
+    width: 280px;
+    height: 280px;
+    margin: 0 auto;
+    background: var(--surface);
+    border-radius: 50%;
+    box-shadow: 
+      inset 0 10px 20px rgba(0,0,0,0.5),
+      0 0 0 4px var(--dial-border);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .dial-svg {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+
+  .knob {
+    width: 160px;
+    height: 160px;
+    background: var(--primary);
+    border-radius: 50%;
+    z-index: 10;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.6), inset 0 2px 5px rgba(255,255,255,0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid var(--dial-border);
+    transition: transform 0.1s;
+    position: relative;
+  }
+
+  .knob:active {
+    transform: scale(0.98);
+  }
+
+  .knob-indicator {
+    position: absolute;
+    top: 10px;
+    width: 6px;
+    height: 20px;
+    background: var(--card-bg);
+    border-radius: 3px;
+  }
+
+  .digital-display {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 2.8rem;
+    font-weight: bold;
+    color: var(--card-bg);
+    text-shadow: 0 0 10px rgba(173, 255, 47, 0.5);
+    z-index: 20;
+    pointer-events: none;
+  }
+  [data-theme="tactical_lime"] .digital-display {
+    text-shadow: 0 0 15px var(--card-bg);
+  }
+
+  .presets {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 10px;
+  }
+
+  .preset-btn {
+    background: transparent;
+    border: 2px solid var(--dial-border);
+    color: var(--text-color);
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 1.1rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .preset-btn:active {
+    transform: translateY(4px);
+  }
+
+  .preset-btn.active {
+    background: var(--card-bg);
+    color: var(--text-inverted);
+    box-shadow: 0 0 15px var(--card-bg);
+  }
+
+  .controls {
+    display: flex;
+    gap: 15px;
+    padding: 0 10px;
+  }
+
+  .btn-main {
+    flex: 1;
+    padding: 16px;
+    border-radius: 16px;
+    border: none;
+    background: var(--card-bg);
+    color: var(--text-inverted);
+    font-size: 1.2rem;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+  .btn-main:active {
+    transform: scale(0.96);
+  }
+
+  .stats-panel {
+    background: var(--surface);
+    border-radius: 20px;
+    padding: 20px;
+    margin-top: 10px;
+    border: 1px solid var(--dial-border);
+  }
+  .stats-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    color: var(--card-bg);
+  }
+  .streak {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .shield-icon {
+    font-size: 1.1rem;
+  }
+  .ledger {
+    max-height: 150px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-right: 5px;
+  }
+  .ledger::-webkit-scrollbar { width: 4px; }
+  .ledger::-webkit-scrollbar-thumb { background: var(--dial-border); border-radius: 4px; }
+
+  .ledger-card {
+    background: var(--primary);
+    padding: 12px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid var(--dial-border);
+    font-size: 0.9rem;
+  }
+  .ledger-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .ledger-exp {
+    color: var(--card-bg);
+    font-weight: bold;
+  }
+  .ledger-del {
+    background: transparent;
+    border: none;
+    color: #ff4444;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 4px;
+  }
+  .ledger-del:active { transform: scale(0.8); }
+
+</style>
+</head>
+<body>
+
+<div class="app-container">
+  <div class="header">
+    <div class="logo glitch-text" data-text="JUMPSTART">JUMPSTART</div>
+    <div class="theme-selector">
+      <div class="theme-btn theme-retro" onclick="setTheme('retro_mint')"></div>
+      <div class="theme-btn theme-sage" onclick="setTheme('warm_sage')"></div>
+      <div class="theme-btn theme-lime active" onclick="setTheme('tactical_lime')"></div>
+    </div>
+  </div>
+
+  <div class="dial-wrapper" id="dialBtn">
+    <svg class="dial-svg" viewBox="0 0 200 200">
+      <circle cx="100" cy="100" r="90" fill="none" stroke="var(--primary)" stroke-width="2"></circle>
+      <g id="ticks"></g>
+      <path id="pie-slice" d="" fill="var(--card-bg)" opacity="0.8"></path>
+    </svg>
+    <div class="knob" id="knob">
+      <div class="knob-indicator"></div>
+      <div class="digital-display" id="display">05:00</div>
+    </div>
+  </div>
+
+  <div class="presets" id="presets">
+    <button class="preset-btn" data-time="3">3</button>
+    <button class="preset-btn active" data-time="5">5</button>
+    <button class="preset-btn" data-time="15">15</button>
+    <button class="preset-btn" data-time="30">30</button>
+    <button class="preset-btn" data-time="60">60</button>
+  </div>
+
+  <div class="controls">
+    <button class="btn-main" id="startBtn">START</button>
+    <button class="btn-main" id="stopBtn" style="background: transparent; border: 2px solid var(--dial-border); color: var(--text-color);">STOP</button>
+  </div>
+
+  <div class="stats-panel">
+    <div class="stats-header">
+      <span>EXP: <span id="totalExp">0</span></span>
+      <div class="streak">
+        <span class="shield-icon" id="shieldIcon">🛡️</span>
+        <span id="streakCount">0</span> Day Streak
+      </div>
+    </div>
+    <div class="ledger" id="ledger">
+      <!-- Cards go here -->
+    </div>
+  </div>
+</div>
+
+<script>
+  // -- Haptics & Audio --
+  function hapticClick() {
+    if (navigator.vibrate) navigator.vibrate(35);
+  }
+
+  function playChime() {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc1.frequency.value = 850;
+      osc2.frequency.value = 854;
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(ctx.destination);
+
+      gain.gain.setValueAtTime(1, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 4);
+
+      osc1.start();
+      osc2.start();
+      osc1.stop(ctx.currentTime + 4);
+      osc2.stop(ctx.currentTime + 4);
+    } catch (e) { console.error("Audio error", e); }
+  }
+
+  // -- Theme Management --
+  function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.theme-${theme.split('_')[1] || theme.split('_')[0]}`).classList.add('active');
+    hapticClick();
+    renderTicks();
+  }
+
+  // -- Math & SVG --
+  function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+    const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
+    return {
+      x: centerX + (radius * Math.cos(angleInRadians)),
+      y: centerY + (radius * Math.sin(angleInRadians))
+    };
+  }
+
+  function describeArc(x, y, radius, startAngle, endAngle){
+    if(endAngle - startAngle >= 360) endAngle = startAngle + 359.99;
+    const start = polarToCartesian(x, y, radius, endAngle);
+    const end = polarToCartesian(x, y, radius, startAngle);
+    const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+    return [
+      "M", start.x, start.y, 
+      "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y,
+      "L", x, y,
+      "Z"
+    ].join(" ");
+  }
+
+  // -- App State --
+  const intervals = [3, 5, 15, 30, 60];
+  let currentPresetIndex = 1; // 5 min
+  let totalTime = 5 * 60;
+  let timeLeft = totalTime;
+  let timerInterval = null;
+  let isRunning = false;
+
+  const display = document.getElementById('display');
+  const pieSlice = document.getElementById('pie-slice');
+  const knob = document.getElementById('knob');
+  const startBtn = document.getElementById('startBtn');
+  const stopBtn = document.getElementById('stopBtn');
+  const ticksGroup = document.getElementById('ticks');
+  const ledger = document.getElementById('ledger');
+
+  function renderTicks() {
+    ticksGroup.innerHTML = '';
+    const color = getComputedStyle(document.documentElement).getPropertyValue('--dial-border').trim();
+    const bezelTicks = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+    for (let i = 0; i < 60; i++) {
+      const isMajor = bezelTicks.includes(i);
+      const angle = (i / 60) * 360;
+      const innerRadius = isMajor ? 82 : 87;
+      const outerRadius = 90;
+      const start = polarToCartesian(100, 100, innerRadius, angle + 90);
+      const end = polarToCartesian(100, 100, outerRadius, angle + 90);
+      
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', start.x);
+      line.setAttribute('y1', start.y);
+      line.setAttribute('x2', end.x);
+      line.setAttribute('y2', end.y);
+      line.setAttribute('stroke', color);
+      line.setAttribute('stroke-width', isMajor ? "2" : "1");
+      ticksGroup.appendChild(line);
+    }
+  }
+
+  function updateVisuals() {
+    const mins = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+    const secs = (timeLeft % 60).toString().padStart(2, '0');
+    display.textContent = `${mins}:${secs}`;
+
+    const percent = totalTime > 0 ? (timeLeft / totalTime) : 0;
+    const angle = percent * 360;
+    pieSlice.setAttribute('d', describeArc(100, 100, 90, 0, angle));
+    
+    // Rotate knob relative to countdown
+    knob.style.transform = `rotate(${360 - angle}deg)`;
+  }
+
+  function setPreset(index) {
+    currentPresetIndex = index;
+    const mins = intervals[index];
+    totalTime = mins * 60;
+    timeLeft = totalTime;
+    document.querySelectorAll('.preset-btn').forEach((b, i) => {
+      b.classList.toggle('active', i === index);
+    });
+    updateVisuals();
+    hapticClick();
+  }
+
+  document.querySelectorAll('.preset-btn').forEach((btn, index) => {
+    btn.addEventListener('click', () => {
+      if(isRunning) stopTimer();
+      setPreset(index);
+    });
+  });
+
+  function startTimer() {
+    if (isRunning) return;
+    if (timeLeft <= 0) setPreset(currentPresetIndex);
+    isRunning = true;
+    startBtn.textContent = 'PAUSE';
+    hapticClick();
+
+    timerInterval = setInterval(() => {
+      timeLeft--;
+      if (timeLeft % 60 === 0 && timeLeft > 0) hapticClick(); // Haptic every minute
+      
+      if (timeLeft <= 0) {
+        finishTimer();
+      } else {
+        updateVisuals();
+      }
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (!isRunning) return;
+    isRunning = false;
+    clearInterval(timerInterval);
+    startBtn.textContent = 'RESUME';
+    hapticClick();
+  }
+
+  function finishTimer() {
+    stopTimer();
+    timeLeft = 0;
+    updateVisuals();
+    playChime();
+    hapticClick();
+    setTimeout(hapticClick, 200);
+    setTimeout(hapticClick, 400);
+    
+    startBtn.textContent = 'START';
+    
+    logSession(intervals[currentPresetIndex]);
+
+    // Auto-suggest next preset
+    currentPresetIndex = (currentPresetIndex + 1) % intervals.length;
+    setPreset(currentPresetIndex);
+  }
+
+  startBtn.addEventListener('click', () => {
+    isRunning ? stopTimer() : startTimer();
+  });
+
+  stopBtn.addEventListener('click', () => {
+    stopTimer();
+    setPreset(currentPresetIndex);
+    startBtn.textContent = 'START';
+  });
+
+  // -- Data Persistence --
+  function loadLogs() {
+    return JSON.parse(localStorage.getItem('jumpstartLogs') || '[]');
+  }
+  function saveLogs(logs) {
+    localStorage.setItem('jumpstartLogs', JSON.stringify(logs));
+  }
+
+  function logSession(duration) {
+    const logs = loadLogs();
+    logs.unshift({
+      id: Date.now().toString(),
+      timestamp: Date.now(),
+      durationMinutes: duration,
+      exp: duration
+    });
+    saveLogs(logs);
+    updateStats();
+  }
+
+  function deleteLog(id) {
+    let logs = loadLogs();
+    logs = logs.filter(l => l.id !== id);
+    saveLogs(logs);
+    updateStats();
+    hapticClick();
+  }
+
+  function updateStats() {
+    const logs = loadLogs();
+    const now = Date.now();
+    const oneDay = 24 * 60 * 60 * 1000;
+    
+    // Calculate EXP (7-day rolling)
+    const sevenDaysAgo = now - (7 * oneDay);
+    const exp = logs.filter(l => l.timestamp > sevenDaysAgo).reduce((acc, l) => acc + l.exp, 0);
+    document.getElementById('totalExp').textContent = exp;
+
+    // Compassion Streak Logic
+    let streak = 0;
+    let shielded = false;
+    if (logs.length > 0) {
+      // Very basic streak calculation for demo
+      // Count unique days back from today
+      const sortedDays = [...new Set(logs.map(l => new Date(l.timestamp).toDateString()))]
+        .sort((a,b) => new Date(b) - new Date(a));
+      
+      const todayDate = new Date().toDateString();
+      const yesterdayDate = new Date(now - oneDay).toDateString();
+      const twoDaysAgoDate = new Date(now - 2*oneDay).toDateString();
+      
+      if (sortedDays[0] === todayDate) {
+        streak = 1;
+        shielded = false;
+        // count backwards
+        for (let i = 1; i < sortedDays.length; i++) {
+          const expectedDate = new Date(now - i*oneDay).toDateString();
+          if (sortedDays[i] === expectedDate) streak++;
+          else break;
+        }
+      } else if (sortedDays[0] === yesterdayDate) {
+        streak = 1; // carry over
+        shielded = true; // Still ok, 1 day grace
+      } else if (sortedDays[0] === twoDaysAgoDate) {
+        streak = 0; // Lost
+        shielded = false;
+      }
+    }
+    
+    document.getElementById('streakCount').textContent = streak;
+    document.getElementById('shieldIcon').style.opacity = shielded ? '1' : '0.2';
+    document.getElementById('shieldIcon').title = shielded ? 'Shield Active (Grace Period)' : 'Shield Ready';
+
+    // Render Ledger
+    ledger.innerHTML = '';
+    logs.slice(0, 20).forEach(log => {
+      const d = new Date(log.timestamp);
+      const div = document.createElement('div');
+      div.className = 'ledger-card';
+      div.innerHTML = `
+        <div class="ledger-info">
+          <span>${log.durationMinutes} min focus</span>
+          <span style="font-size: 0.75rem; opacity: 0.7">${d.toLocaleDateString()} ${d.toLocaleTimeString()}</span>
+        </div>
+        <div style="display:flex; align-items:center; gap: 10px;">
+          <span class="ledger-exp">+${log.exp} EXP</span>
+          <button class="ledger-del" onclick="deleteLog('${log.id}')">🗑️</button>
+        </div>
+      `;
+      ledger.appendChild(div);
+    });
+  }
+
+  // Init
+  renderTicks();
+  updateVisuals();
+  updateStats();
+  
+  // Fix theme selector based on default data-theme
+  document.querySelector('.theme-lime').classList.add('active');
+
+</script>
+</body>
+</html>
