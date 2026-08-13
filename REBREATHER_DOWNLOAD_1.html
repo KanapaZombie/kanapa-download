@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>REBREATHER ☯</title>
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --fg: #e8e8e8;
+      --muted: #666;
+      --accent: #a0a0a0;
+      --viz: #b8e0b0; /* light green */
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      line-height: 1.4;
+    }
+    h1 {
+      font-weight: 400;
+      font-size: 1.1rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 0.25rem;
+      color: var(--accent);
+    }
+    .subtitle {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 2.5rem;
+      letter-spacing: 0.05em;
+    }
+    .states {
+      display: flex;
+      flex-direction: column;
+      gap: 1.1rem;
+      width: 100%;
+      max-width: 340px;
+    }
+    .state {
+      border: 1px solid #222;
+      padding: 1rem 1.2rem;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .state:hover, .state.active {
+      border-color: #444;
+      background: #111;
+    }
+    .state-title {
+      font-size: 0.68rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.3rem;
+    }
+    .state-name {
+      font-size: 0.95rem;
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+    }
+    .state-desc {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+    .timing {
+      font-size: 0.72rem;
+      font-family: ui-monospace, monospace;
+      color: var(--accent);
+    }
+
+    #session {
+      display: none;
+      text-align: center;
+      max-width: 340px;
+      width: 100%;
+    }
+    #session.active { display: block; }
+    .states.hidden { display: none; }
+
+    .breath-label {
+      font-size: 0.68rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 1.2rem;
+    }
+    .phase {
+      font-size: 1.6rem;
+      font-weight: 300;
+      letter-spacing: 0.12em;
+      margin-bottom: 0.4rem;
+      color: var(--accent);
+    }
+    .countdown {
+      font-size: 3.6rem;
+      font-weight: 200;
+      font-variant-numeric: tabular-nums;
+      margin: 0.8rem 0 1.5rem;
+    }
+
+    #viz {
+      width: 180px;
+      height: 180px;
+      margin: 0 auto 1.8rem;
+      display: block;
+    }
+
+    .controls {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 1.5rem;
+    }
+    button {
+      background: none;
+      border: 1px solid #333;
+      color: var(--muted);
+      padding: 0.55rem 1.3rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+    button:hover { border-color: #555; color: var(--fg); }
+
+    .footer {
+      position: fixed;
+      bottom: 1.1rem;
+      font-size: 0.62rem;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h1>REBREATHER ☯</h1>
+  <p class="subtitle">Select a state · start immediately</p>
+
+  <div class="states" id="states">
+    <div class="state" data-name="Spiral Breathing" data-pattern="4,2,6" data-duration="120" data-viz="spiral">
+      <div class="state-title">Panic · Mind Chaos · Fear</div>
+      <div class="state-name">Spiral Breathing</div>
+      <div class="state-desc">Slow the spiral. Long exhale to break panic loops.</div>
+      <div class="timing">↗ IN 4 s · ⏸ HOLD 2 s · ↘ OUT 6 s</div>
+    </div>
+
+    <div class="state" data-name="Box Breathing" data-pattern="4,4,4,4" data-duration="180" data-viz="box">
+      <div class="state-title">Grounding · Dissociation</div>
+      <div class="state-name">Box Breathing</div>
+      <div class="state-desc">Even four-count square. Re-anchor the body.</div>
+      <div class="timing">↗ IN 4 · ⏸ 4 · ↘ OUT 4 · ⏸ 4</div>
+    </div>
+
+    <div class="state" data-name="Triangle Breathing" data-pattern="4,4,4" data-duration="180" data-viz="triangle">
+      <div class="state-title">Focus · Mind Noise · Sharpening</div>
+      <div class="state-name">Triangle Breathing</div>
+      <div class="state-desc">Balanced triangle. Clear mental noise.</div>
+      <div class="timing">↗ IN 4 s · ⏸ HOLD 4 s · ↘ OUT 4 s</div>
+    </div>
+
+    <div class="state" data-name="4-7-8 Regimen" data-pattern="4,7,8" data-duration="240" data-viz="elongated">
+      <div class="state-title">Relax · Anger · Aggression</div>
+      <div class="state-name">4-7-8 Regimen</div>
+      <div class="state-desc">Deep 4-7-8 rhythm. Downshift into calm.</div>
+      <div class="timing">↗ IN 4 s · ⏸ HOLD 7 s · ↘ OUT 8 s</div>
+    </div>
+
+    <div class="state" data-name="5-5 Coherent" data-pattern="5,0,5" data-duration="90" data-viz="coherent">
+      <div class="state-title">Energize · Lethargy · Shock</div>
+      <div class="state-name">5-5 Coherent</div>
+      <div class="state-desc">Coherent 5-5. Wake the body — 90 s max.</div>
+      <div class="timing">↗ IN 5 s · ↘ OUT 5 s</div>
+    </div>
+  </div>
+
+  <div id="session">
+    <div class="breath-label" id="session-name"></div>
+    <canvas id="viz" width="180" height="180"></canvas>
+    <div class="phase" id="phase">IN</div>
+    <div class="countdown" id="countdown">4</div>
+    <div class="controls">
+      <button id="stop">Stop</button>
+      <button id="mute">Sound On</button>
+    </div>
+  </div>
+
+  <div class="footer">Not a substitute for emergency care</div>
+
+  <script>
+    const statesEl = document.getElementById('states');
+    const sessionEl = document.getElementById('session');
+    const phaseEl = document.getElementById('phase');
+    const countdownEl = document.getElementById('countdown');
+    const sessionName = document.getElementById('session-name');
+    const stopBtn = document.getElementById('stop');
+    const muteBtn = document.getElementById('mute');
+    const canvas = document.getElementById('viz');
+    const ctx = canvas.getContext('2d');
+
+    // ---------- Audio ----------
+    let audioCtx = null;
+    let soundEnabled = true;
+    let secondCounter = 0; // counts seconds inside current phase
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+
+    // base frequencies (Hz)
+    const BASE = {
+      IN: 392, // G4
+      HOLD: 330, // E4
+      OUT: 294 // D4
+    };
+
+    function playSecondTone(phase, secondInPhase) {
+      if (!soundEnabled || !audioCtx) return;
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      let freq = BASE[phase] || 330;
+
+      if (phase === 'IN') {
+        // each successive second is a half-step higher
+        freq = BASE.IN * Math.pow(2, secondInPhase / 12);
+      } else if (phase === 'HOLD') {
+        // constant pitch
+        freq = BASE.HOLD;
+      } else if (phase === 'OUT') {
+        // each successive second pitches down
+        freq = BASE.OUT * Math.pow(2, -secondInPhase / 12);
+      }
+
+      osc.frequency.value = freq;
+      osc.type = 'sine';
+
+      gain.gain.setValueAtTime(0, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.07, audioCtx.currentTime + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.4);
+    }
+
+    muteBtn.addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      muteBtn.textContent = soundEnabled ? 'Sound On' : 'Sound Off';
+      if (soundEnabled) initAudio();
+    });
+
+    // ---------- Visualizations (light green) ----------
+    const GREEN = 'rgba(184, 224, 176, 0.85)';
+    const GREEN_DIM = 'rgba(184, 224, 176, 0.3)';
+
+    function clearViz() {
+      ctx.clearRect(0, 0, 180, 180);
+    }
+
+    function drawSpiral(progress, phase) {
+      clearViz();
+      const cx = 90, cy = 90;
+      const maxR = phase === 'OUT' ? 70 : 48;
+      const r = 14 + progress * maxR;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.strokeStyle = GREEN;
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(cx, cy, r * 0.4, 0, Math.PI * 2);
+      ctx.strokeStyle = GREEN_DIM;
+      ctx.stroke();
+    }
+
+    function drawBox(progress, phaseIndex) {
+      clearViz();
+      const size = 90, x = 45, y = 45;
+      ctx.strokeStyle = GREEN_DIM;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x, y, size, size);
+
+      ctx.strokeStyle = GREEN;
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      if (phaseIndex === 0) {
+        ctx.moveTo(x, y + size);
+        ctx.lineTo(x, y + size - progress * size);
+      } else if (phaseIndex === 1) {
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + progress * size, y);
+      } else if (phaseIndex === 2) {
+        ctx.moveTo(x + size, y);
+        ctx.lineTo(x + size, y + progress * size);
+      } else {
+        ctx.moveTo(x + size, y + size);
+        ctx.lineTo(x + size - progress * size, y + size);
+      }
+      ctx.stroke();
+    }
+
+    function drawTriangle(progress, phaseIndex) {
+      clearViz();
+      const cx = 90, cy = 100, r = 65;
+      const pts = [
+        [cx, cy - r],
+        [cx - r * 0.87, cy + r * 0.5],
+        [cx + r * 0.87, cy + r * 0.5]
+      ];
+      ctx.strokeStyle = GREEN_DIM;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(...pts[0]);
+      ctx.lineTo(...pts[1]);
+      ctx.lineTo(...pts[2]);
+      ctx.closePath();
+      ctx.stroke();
+
+      ctx.strokeStyle = GREEN;
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      if (phaseIndex === 0) {
+        ctx.moveTo(...pts[1]);
+        ctx.lineTo(
+          pts[1][0] + (pts[0][0] - pts[1][0]) * progress,
+          pts[1][1] + (pts[0][1] - pts[1][1]) * progress
+        );
+      } else if (phaseIndex === 1) {
+        ctx.moveTo(...pts[0]);
+        ctx.lineTo(
+          pts[0][0] + (pts[2][0] - pts[0][0]) * progress,
+          pts[0][1] + (pts[2][1] - pts[0][1]) * progress
+        );
+      } else {
+        ctx.moveTo(...pts[2]);
+        ctx.lineTo(
+          pts[2][0] + (pts[1][0] - pts[2][0]) * progress,
+          pts[2][1] + (pts[1][1] - pts[2][1]) * progress
+        );
+      }
+      ctx.stroke();
+    }
+
+    function drawElongated(progress, phase) {
+      clearViz();
+      const cx = 90, cy = 90;
+      let ry = 55;
+      if (phase === 'IN') ry = 42 + progress * 28;
+      else if (phase === 'HOLD') ry = 70;
+      else ry = 70 - progress * 28;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 36, ry, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = GREEN;
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+    }
+
+    function drawCoherent(progress, phase) {
+      clearViz();
+      const cy = 90;
+      const amp = phase === 'IN' ? progress * 42 : (1 - progress) * 42;
+      ctx.beginPath();
+      ctx.moveTo(28, cy);
+      ctx.quadraticCurveTo(90, cy - amp, 152, cy);
+      ctx.strokeStyle = GREEN;
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(28, cy);
+      ctx.quadraticCurveTo(90, cy + amp * 0.35, 152, cy);
+      ctx.strokeStyle = GREEN_DIM;
+      ctx.stroke();
+    }
+
+    // ---------- Session ----------
+    let timer = null;
+    let totalTimer = null;
+    let secondTimer = null;
+    let currentViz = 'spiral';
+    let currentPattern = [];
+    let currentPhaseIndex = 0;
+    let phaseStart = 0;
+    let phaseDuration = 0;
+
+    const phaseNames = ['IN', 'HOLD', 'OUT', 'HOLD'];
+
+    document.querySelectorAll('.state').forEach(el => {
+      el.addEventListener('click', () => {
+        initAudio();
+        const name = el.dataset.name;
+        const pattern = el.dataset.pattern.split(',').map(Number);
+        const duration = parseInt(el.dataset.duration, 10);
+        currentViz = el.dataset.viz;
+        startSession(name, pattern, duration);
+      });
+    });
+
+    stopBtn.addEventListener('click', stopSession);
+
+    function startSession(name, pattern, maxSeconds) {
+      statesEl.classList.add('hidden');
+      sessionEl.classList.add('active');
+      sessionName.textContent = name;
+      currentPattern = pattern;
+      currentPhaseIndex = 0;
+      secondCounter = 0;
+
+      while (currentPattern[currentPhaseIndex] === 0) {
+        currentPhaseIndex = (currentPhaseIndex + 1) % currentPattern.length;
+      }
+      phaseDuration = currentPattern[currentPhaseIndex];
+      phaseStart = Date.now();
+
+      updatePhaseDisplay();
+      playSecondTone(phaseNames[currentPhaseIndex], 0);
+
+      clearInterval(timer);
+      clearInterval(secondTimer);
+      clearTimeout(totalTimer);
+
+      timer = setInterval(tick, 40);
+      secondTimer = setInterval(onSecond, 1000);
+      totalTimer = setTimeout(stopSession, maxSeconds * 1000);
+    }
+
+    function onSecond() {
+      secondCounter++;
+      const phase = phaseNames[currentPhaseIndex] || 'IN';
+      playSecondTone(phase, secondCounter);
+    }
+
+    function tick() {
+      const now = Date.now();
+      const elapsedInPhase = (now - phaseStart) / 1000;
+      const progress = Math.min(1, elapsedInPhase / phaseDuration);
+
+      const phaseName = phaseNames[currentPhaseIndex] || 'IN';
+      if (currentViz === 'spiral') drawSpiral(progress, phaseName);
+      else if (currentViz === 'box') drawBox(progress, currentPhaseIndex);
+      else if (currentViz === 'triangle') drawTriangle(progress, currentPhaseIndex);
+      else if (currentViz === 'elongated') drawElongated(progress, phaseName);
+      else if (currentViz === 'coherent') drawCoherent(progress, phaseName);
+
+      const remaining = Math.ceil(phaseDuration - elapsedInPhase);
+      countdownEl.textContent = remaining > 0 ? remaining : 0;
+
+      if (elapsedInPhase >= phaseDuration) {
+        currentPhaseIndex = (currentPhaseIndex + 1) % currentPattern.length;
+        while (currentPattern[currentPhaseIndex] === 0) {
+          currentPhaseIndex = (currentPhaseIndex + 1) % currentPattern.length;
+        }
+        phaseDuration = currentPattern[currentPhaseIndex];
+        phaseStart = now;
+        secondCounter = 0;
+        updatePhaseDisplay();
+        playSecondTone(phaseNames[currentPhaseIndex], 0);
+      }
+    }
+
+    function updatePhaseDisplay() {
+      phaseEl.textContent = phaseNames[currentPhaseIndex] || 'IN';
+    }
+
+    function stopSession() {
+      clearInterval(timer);
+      clearInterval(secondTimer);
+      clearTimeout(totalTimer);
+      sessionEl.classList.remove('active');
+      statesEl.classList.remove('hidden');
+      clearViz();
+    }
+  </script>
+</body>
+</html>
