@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>REBREATHER ☯</title>
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --fg: #e8e8e8;
+      --muted: #666;
+      --accent: #a0a0a0;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      line-height: 1.4;
+    }
+    h1 {
+      font-weight: 400;
+      font-size: 1.1rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 0.25rem;
+      color: var(--accent);
+    }
+    .subtitle {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 3rem;
+      letter-spacing: 0.05em;
+    }
+    .states {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      width: 100%;
+      max-width: 320px;
+    }
+    .state {
+      border: 1px solid #222;
+      padding: 1.1rem 1.25rem;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .state:hover, .state.active {
+      border-color: #444;
+      background: #111;
+    }
+    .state-title {
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.35rem;
+    }
+    .state-name {
+      font-size: 1rem;
+      font-weight: 500;
+      margin-bottom: 0.3rem;
+    }
+    .state-desc {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+    }
+    .timing {
+      font-size: 0.75rem;
+      font-family: ui-monospace, monospace;
+      color: var(--accent);
+    }
+    /* Active session view */
+    #session {
+      display: none;
+      text-align: center;
+      max-width: 320px;
+      width: 100%;
+    }
+    #session.active { display: block; }
+    .states.hidden { display: none; }
+    .breath-label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+    .phase {
+      font-size: 2.8rem;
+      font-weight: 300;
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.05em;
+    }
+    .countdown {
+      font-size: 4rem;
+      font-weight: 200;
+      font-variant-numeric: tabular-nums;
+      margin: 1.5rem 0;
+    }
+    .stop {
+      margin-top: 2.5rem;
+      background: none;
+      border: 1px solid #333;
+      color: var(--muted);
+      padding: 0.6rem 1.4rem;
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+    .stop:hover { border-color: #555; color: var(--fg); }
+    .footer {
+      position: fixed;
+      bottom: 1.2rem;
+      font-size: 0.65rem;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h1>REBREATHER ☯</h1>
+  <p class="subtitle">Select a state · start immediately</p>
+
+  <div class="states" id="states">
+    <div class="state" data-name="Spiral Breathing" data-pattern="4,2,6" data-duration="120">
+      <div class="state-title">Panic · Mind Chaos · Fear</div>
+      <div class="state-name">Spiral Breathing</div>
+      <div class="state-desc">Slow the spiral. Long exhale to break panic loops.</div>
+      <div class="timing">↗ IN 4 s  ·  ⏸ HOLD 2 s  ·  ↘ OUT 6 s</div>
+    </div>
+
+    <div class="state" data-name="Box Breathing" data-pattern="4,4,4,4" data-duration="180">
+      <div class="state-title">Grounding · Dissociation</div>
+      <div class="state-name">Box Breathing</div>
+      <div class="state-desc">Even four-count square. Re-anchor the body.</div>
+      <div class="timing">↗ IN 4  ·  ⏸ 4  ·  ↘ OUT 4  ·  ⏸ 4</div>
+    </div>
+
+    <div class="state" data-name="Triangle Breathing" data-pattern="4,4,4" data-duration="180">
+      <div class="state-title">Focus · Mind Noise · Sharpening</div>
+      <div class="state-name">Triangle Breathing</div>
+      <div class="state-desc">Balanced triangle. Clear mental noise.</div>
+      <div class="timing">↗ IN 4 s  ·  ⏸ HOLD 4 s  ·  ↘ OUT 4 s</div>
+    </div>
+
+    <div class="state" data-name="4-7-8 Regimen" data-pattern="4,7,8" data-duration="240">
+      <div class="state-title">Relax · Anger · Aggression</div>
+      <div class="state-name">4-7-8 Regimen</div>
+      <div class="state-desc">Deep 4-7-8 rhythm. Downshift into calm.</div>
+      <div class="timing">↗ IN 4 s  ·  ⏸ HOLD 7 s  ·  ↘ OUT 8 s</div>
+    </div>
+
+    <div class="state" data-name="5-5 Coherent" data-pattern="5,0,5" data-duration="90">
+      <div class="state-title">Energize · Lethargy · Shock</div>
+      <div class="state-name">5-5 Coherent</div>
+      <div class="state-desc">Coherent 5-5. Wake the body — 90 s max.</div>
+      <div class="timing">↗ IN 5 s  ·  ↘ OUT 5 s</div>
+    </div>
+  </div>
+
+  <div id="session">
+    <div class="breath-label" id="session-name"></div>
+    <div class="phase" id="phase">IN</div>
+    <div class="countdown" id="countdown">4</div>
+    <button class="stop" id="stop">Stop</button>
+  </div>
+
+  <div class="footer">Not a substitute for emergency care</div>
+
+  <script>
+    const states = document.getElementById('states');
+    const session = document.getElementById('session');
+    const phaseEl = document.getElementById('phase');
+    const countdownEl = document.getElementById('countdown');
+    const sessionName = document.getElementById('session-name');
+    const stopBtn = document.getElementById('stop');
+
+    let timer = null;
+    let totalTimer = null;
+
+    const phaseNames = {
+      0: 'IN',
+      1: 'HOLD',
+      2: 'OUT',
+      3: 'HOLD'
+    };
+
+    document.querySelectorAll('.state').forEach(el => {
+      el.addEventListener('click', () => {
+        const name = el.dataset.name;
+        const pattern = el.dataset.pattern.split(',').map(Number);
+        const duration = parseInt(el.dataset.duration, 10);
+
+        startSession(name, pattern, duration);
+      });
+    });
+
+    stopBtn.addEventListener('click', stopSession);
+
+    function startSession(name, pattern, maxSeconds) {
+      states.classList.add('hidden');
+      session.classList.add('active');
+      sessionName.textContent = name;
+
+      let phaseIndex = 0;
+      let remaining = pattern[0];
+      let elapsed = 0;
+
+      phaseEl.textContent = phaseNames[phaseIndex] || 'IN';
+      countdownEl.textContent = remaining;
+
+      clearInterval(timer);
+      clearTimeout(totalTimer);
+
+      timer = setInterval(() => {
+        remaining--;
+        elapsed++;
+        countdownEl.textContent = remaining;
+
+        if (remaining <= 0) {
+          phaseIndex = (phaseIndex + 1) % pattern.length;
+          // skip zero-length phases (for 5-5)
+          while (pattern[phaseIndex] === 0) {
+            phaseIndex = (phaseIndex + 1) % pattern.length;
+          }
+          remaining = pattern[phaseIndex];
+          phaseEl.textContent = phaseNames[phaseIndex] || 'IN';
+          countdownEl.textContent = remaining;
+        }
+      }, 1000);
+
+      totalTimer = setTimeout(stopSession, maxSeconds * 1000);
+    }
+
+    function stopSession() {
+      clearInterval(timer);
+      clearTimeout(totalTimer);
+      session.classList.remove('active');
+      states.classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>
